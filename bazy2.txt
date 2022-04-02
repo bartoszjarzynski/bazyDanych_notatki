@@ -1,0 +1,103 @@
+# Kopiowanie danych do nowej bazy
+# Tworzymy pomocniczą tabelę t:
+# k1 i k2 to nazwy kolumn z ich typami
+> use znajomi
+> create table t(
+	-> k1 char(12),
+	-> k2 int);
+
+> insert t
+	-> select imie, wiek from osoby;
+# Do tabeli t wprowadziliśmy imie i wiek z osoby
+> select * from osoby; # Wyświetlamy oryginał
+> select * from t; # Wyświetlamy kopię
+
+> drop table t; # Usuwamy tabelę
+
+# Tworząc bazę, a następnie dodając do niej dane trzeba pamiętać o prawidłowym wprowadzaniu danych do systemu. Np. wprowadzanie danych poprawnego typu jak zadeklarowanego; 
+# Nie przekraczać zadanego przedziału długości ciągu znaków (podobnie z wiekiem); 
+# Gdy deklarujemy imię powinniśmy również zadeklarować nazwisko(!); 
+# Nie możemy złamać klucza głównego;
+
+
+# Zapytania zmieniające strukturę bazy lub tabel to ALTER
+# Możemy tak dodać kolumnę na koniec naszej tabeli
+> alter table osoby
+	-> add
+	-> nk int default 5;
+# Następnie sprawdzamy wszystko poleceniem
+> desc osoby;
+
+# Jeśli chcemy dodać ją na początku, to używamy polecenia FIRST
+> alter table osoby
+	-> add
+	-> nk2 char(5) not null FIRST;
+
+# Aby dodać kolumnę pośrodku należy użyć polecenia AFTER coś
+> alter table osoby
+	-> add
+	-> nk3 char(5) AFTER imie;
+
+# Kolumny możemy również usuwać poleceniem
+> alter table osoby
+	-> DROP nk3;
+
+# NIE MOŻNA USUWAĆ KOLUMN, DO KTÓRYCH PROWADZI JAKAŚ REFERENCJA
+# USUWAJĄC KOLUMNĘ Z KLUCZEM GŁÓWNYM ZNIKNĘŁA MI ZAWARTOŚĆ CAŁEJ TABELI
+
+# Nie da się usunąć tabelę, która ma opcję auto_increment, najpierw trzeba ją referiniować, aby to zrobić należy użyć polecenia MODIFY:
+> alter table pol
+	-> MODIFY id_p
+	-> tinyint unsigned not null;
+# Teraz możemy ściągnąć klucz główny:
+> alter table pol
+	-> DROP primary key;
+
+# Możemy również dodać klucz główny do kolumny
+> alter table pol
+    -> ADD PRIMARY KEY(id_p);
+
+# Aby przywrócić auto_increment używamy CHANGE lub MODIFY
+# CHANGE potrafi zmienić również nazwę kolumny
+> alter table pol
+    -> CHANGE id_p
+    -> id tinyint unsigned not null auto_increment;
+
+# Aby usunąć kolumnę można zrobić to szybko poleceniem:
+> alter table osoby
+	-> alter <nazwa> drop default;
+
+# Zmienić jej domyślną wartość
+> alter table osoby
+	-> alter <nazwa> set default 12;
+
+# Aby usunąć tę domyślną wartość używamy drop'a
+> alter table osoby
+	-> alter <nazwa> drop default;
+
+
+
+# Aby zmienić nazwę TABELI używamy RENAME
+> alter table pol
+	-> RENAME klej;
+
+
+# Modyfikacje tabel:
+# Dodawanie elementów - insert
+# Usuwanie elementów - delete
+# Zmiana elementów - update
+
+# Usuwanie:
+> DELETE from osoby
+	-> WHERE id_o = 9;
+# Używamy tutaj klucza głównego jako odwołania do wartości
+
+# Zmienianie wartości:
+> UPDATE osoby
+	-> set wiek = 30
+	-> WHERE id_o = 6;
+
+
+
+# Czasami przyjdzie nam zmienić wartość auto_increment'a na mniejszą/większą, robimy to w ten sposób:
+> alter table <nazwa> auto_increment = 0;

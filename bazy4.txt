@@ -1,0 +1,187 @@
+# Zabezpieczenie przed niepożądanym działaniem:
+# Np. zabezpieczenie, żeby wiek nie miał wartości ujemnej
+
+mysql> create table test (
+    -> wiek int not null,
+    -> CONSTRAINT zabezpieczenie  #zabezpieczenie to nazwa warunku
+    -> CHECK(wiek>=0)) #warunek
+    -> engine=innodb; #engine, aby pokazać, że to nie wina silnika
+
+# Dodajemy wyniki do bazy
+mysql> insert test values (9), (8), (0); # Poprawnie dodane
+
+# Jeśli dodamy liczbę nie spełniającą warunków:
+
+mysql> insert test values (-4);
+ERROR 3819 (HY000): Check constraint 'zabezpieczenie' is violated.
+
+
+
+
+# Jeśli chcemy wywołać sobie typ danej NULL musimy to zrobić w szczególny sposób. Służy do tego komenda IS NULL:
+
+mysql> select name, gnpold from country
+    -> where name like "P%"
+    -> and
+    -> gnpold IS (NOT) NULL;
+
+# Wszystko przebiegnie pomyślnie. 
+!!! Nie zadziała, np. polecenie gnpold=NULL ; gnpold="NULL	!!!
+
+
+# Aby ominąć wszystkie NULLe można wypisać innymisłowy wszystkie wartości nie będące NULLem:
+
+mysql> select name, gnpold from country
+    -> where name like "P%"
+    -> and
+    -> gnpold LIKE "%";
+
+# NATOMIAST używając tutaj NOT LIKE... nie wypisze nam to NULLi.
+
+
+
+
+# Czasami potrzebujemy wykryć NULLa. Wtedy możemy użyć funkcji IFNULL(x,y), gdzie 'x' to kolumna, a 'y' tym co będzie widać.
+
+mysql> select name, gnp, ifnull(gnpold,"tu byl null") "dzialanie ifnulla", gnp*gnpold
+    -> from country
+    -> where name like "P%";
+
+
+
+# W razie potrzeby zamiany mnożenia na dodawanie robimy to tak:
+
+mysql> select name kraj, gnp, ifnull(gnpold,0) "gnpold",
+    -> ifnull(gnp+gnpold,gnp) "gnp+gnpold"
+    -> from country
+    -> where name like "P%";
+
+#1 zmieniamy nazwę "name" na "kraj"
+#2 wypisujemy "gnp"
+#3 warunek jeśli gnpold jest null-em, to wypisz "0" i nazwij kolumnę "gnpold"
+#4 warunek dodać gnp+gnpold, jeśli jest null - wypisz gnp równe zero. nazwij kolumnę "gnpold"
+
+
+
+
+
+
+# Tworzymy sobie nową tabelę ze zmiennymi typu data-czas:
+
+mysql> create table test(
+    -> imie varchar(12),
+    -> kiedy DATE,			# Kolumna z datą
+    -> zamawia DATETIME,	# Kolumna z datą i czasem
+    -> czas TIME,			# Kolumna z czasem
+    -> zwrot TIMESTAMP not null DEFAULT CURRENT_TIMESTAMP);	# Kolumna z datą i czasem, która może się autouzupełniać
+
+
+# Dodajemy wpis:
+mysql> insert test values
+    -> ("January","1975:07:23","2007.05.30 21-12-56","12:43:55","1999:04:20 11-12-13");
+
+# Dodajemy kolejne wpisy, tym razem bez ZWROTU, który powinen się sam uzupełnić:
+
+mysql> insert test (imie, kiedy, zamawia, czas) value
+    -> ("Krystyna", "1999-1.03", "2020-01:7 23.2-00", "03:0:00"),
+    -> ("Renata",now(),now(),now()),
+    -> ("Witold","2012-12.12","2000,12-12 12-1:2","0:3:07");
+
+# Zwrot uzupełnił się o jego domyślną wartość.
+
+# Formaty daty i czasu można dowolnie formatować:
+mysql> select CURRENT_DATE() "kol_1", CURRENT_TIME() "kol_2",
+    -> DATE_FORMAT(current_date(), "%w<-.->%M~~-~~%Y..:.:.:..%d") "kol_3",
+    -> TIME_FORMAT(current_time(), "%H |_| %i \\?/ %s <-|-> %p") "kol_4";
+
+# ŚCIĄGA
+https://dev.mysql.com/doc/refman/8.0/en/date-and-time-functions.html
+
+
+# Aby wypisać bieżące informacje dot. dnia i czasu:
+mysql> select YEAR(now()), MONTH(now()), DAY(now()), HOUR(now()), SECOND(now());
+
+
+
+# Aby obliczyć kto ile ma lat stosujemy pewny zapis w oparciu o działania arytmetyczne. Przykład:
+
+mysql> select imie, year(now()) - year(kiedy) wiek from test;
+# Wypisuje imie i jako "wiek" zapisuje różnice między obecnym rokiem a kolumną "kiedy".
+
+
+
+
+# FUNKCJE CIĄGÓW ZNAKÓW
+
+# Aby połączyć, wypisać dane z różnych kolumn używamy CONCAT, łączymy tak argumenty w jeden ciąg znaków.
+# Przykład:
+
+mysql> select CONCAT(name, headofstate) "kraj-głowa", lifeexpectancy życie
+    -> from country
+    -> where name like "P%"
+    -> order by 2 desc;
+
+#1 Łącze ze sobą "name" i "headofstate" - nazywam to "kraj-głowa"
+#2 "Lifeexpectancy" nazywam "życie"
+#3 Wybieram wszystkie 'name' zaczynające się na 'P' z country
+#4 'order by 2 desc' wypisuje mi drugą kolumnę w kolejności malejącej
+
+
+# Mogę również wprowadzić małe zmiany, sformotować ten zapis. W dodatku posortuję listę według rządzącego:
+
+mysql> select CONCAT(name," --> ",headofstate) "kraj-głowa", lifeexpectancy życie
+    -> from country
+    -> where name like "P%"
+    -> order by headofstate;
+
+#1 Dodaje do "name" strzałkę i wypisuję "headofstate", kolumna nazywa się "kraj-głowa"
+
+
+
+# CD. FUNKCJI CIĄGÓW ZNAKÓW:
+
+				RIGHT
+# Aby przyciąć ciąg od lewej do prawej:
+mysql> select LEFT("Ala ma kota",5) kolumna;
+# result ==> "Ala m"
+				LEFT
+# Aby zostawić x ostatnich liter:
+mysql> select RIGHT("Ala ma kota",3) kolumna;
+# result ==> "ota"
+
+				UPPER
+mysql> select UPPER("ajbvuibiua") "litery WIELKIE";
+# result ==> "AJBVUIBIUA"
+
+				LOWER
+mysql> select LOWER("ABC") "litery male";
+# result ==> "abc"
+
+				LENGTH
+mysql> select LENGTH("abc") dlugość;
+# result ==> 3
+
+				LEFT TRIM
+mysql> ltrim(" Ala ma kota. " napis;
+# result ==> "Ala ma kota. "
+
+				RIGHT TRIM
+mysql> ltrim(" Ala ma kota. " napis;
+# result ==> " Ala ma kota."
+
+				TRIM
+mysql> ltrim(" Ala ma kota. " napis;
+# result ==> "Ala ma kota."
+
+
+				SUBSTR
+mysql> select SUBSTR("ABCDEFuckYou",3) napis;
+# result ==> "CDEFuckYou" # Wypisuje od 3 do ostatniej literki;
+
+mysql> select SUBSTR("ABCDEFuckYou",5,6) napis;
+# result ==> "EFuckY" # Wypisuje od 5 upto 6 literek;
+
+# WYKORZYSTAĆ MOŻEMY TE FUNKCJE, NP. SPRAWDZACĄC, JAKIEJ PŁCI SĄ OSOBY W TABELI:
+mysql> select concat(upper(left(ltrim(imie),1)), lower(substr(ltrim(imie),2))) imie,
+    -> if(right(trim(imie),1)="a","kobieta","facet") płeć 
+	-> from test;

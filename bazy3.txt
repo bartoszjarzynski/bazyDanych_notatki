@@ -1,0 +1,134 @@
+# W mySQL jesteśmy w stanie wykonywać obliczenia matematyczne poleceniem select. Wtedy ustalamy równania jako wiersz, tak jak odpowiedzi.
+
+mysql> select 5+7, 3-9, 7*8, 3/11, pow(2,10), sqrt(2);
+
+# Również działa to na funkcje matematyczne
+
+mysql> select sin(3.141592) sinus, 4*atan(1) arctg, abs(-3), log(2.71828) "ln(e)", mod(123,7);
+
+# Wybieramy tutaj co chcemy policzyć i przyporządkowujemy mu nazwę, np. 
+"sinus".
+
+# Podstawowe stałe matematyczne w MySQL:
+
+mysql> select pi(), exp(1) "e^1";
+
+
+
+# Podczas operacji na bazie danych możemy zmieniać tymczasowo nazwy kolumn, np.
+
+mysql> select imie AS name, miasto AS "where" from osoby;
+# Możemy też pominąć polecenie AS oraz cudzysłowie
+
+mysql> select imie as name, miasto as burdel from osoby;
+
+# Jednak, jeśli alias jest wielowyrazowy już wymaga cudzysłowa
+
+mysql> select imie as "giga name", miasto as "mega burdel" from osoby;
+
+
+
+# W razie potrzeby sortowania wg litery można to zrobić poleceniem ORDER BY:
+
+mysql> select imie, nazwisko, wiek, miasto
+    -> from osoby
+    -> ORDER BY miasto;
+
+# Sortowanie jest domyślnie rosnące. Aby to zmienić ustawiamy DESC - malejące lub zostawiamy ASC jako właśnie rosnące.
+
+mysql> select imie, nazwisko, wiek, miasto
+    -> from osoby
+    -> ORDER BY miasto DESC/ASC;
+
+
+# Natomiast sortowanie typu enum odbywa się w ten sposób:
+
+mysql> select * from telefony ORDER BY operator;
+
+
+
+# Alias możemy łączyć z sortowaniem:
+
+mysql> select imie kto, wiek ile, miasto gdzie
+    -> from osoby
+    -> order by miasto desc;
+
+
+
+# Sortowanie również może odbywać się poprzez numerowanie kolumn:
+
+mysql> select imie name, wiek ile, miasto
+    -> from osoby
+    -> order by 3 desc, 2;
+
+
+# Ograniczenia związane z wierszami wykonujemy za pomocą WHERE
+
+mysql> select * from osoby
+    -> WHERE
+    -> wiek > 21;
+
+# Warunki możemy łączyć lub rozdzielać spójnikami logicznymi AND, OR
+
+mysql> select * from osoby
+    -> where
+    -> miasto="Chorzow" or wiek=19;
+
+# Działa to również na przedziałach, np. wieku:
+
+mysql> select * from osoby
+    -> WHERE
+    -> wiek BETWEEN 21 and 30;
+
+# Zaprzeczenie wygląda tak:
+
+mysql> select * from osoby
+    -> WHERE
+    -> wiek NOT BETWEEN 21 and 30;
+
+
+# Zamiast "=" można używać słówka (NOT)LIKE
+
+mysql> select * from osoby
+    -> WHERE
+    -> miasto (NOT)LIKE "Zawiercie";
+
+
+# Jak nie wiemy czego szukać, to możemy zastąpić jeden znaczek symbolem "_", natomiast dowolny ciąg znaków "%"
+
+mysql> select * from osoby
+    -> WHERE
+    -> imie LIKE "_______";
+
+mysql> select * from osoby
+    -> WHERE
+    -> imie LIKE "%";
+
+
+# Jeśli znamy tylko 1+ liter, to możemy filtrować wyszukiwania:
+
+mysql> select * from osoby
+    -> WHERE
+    -> imie (NOT)LIKE "%ks%";
+
+
+# Przydatny jest również operator IN:
+
+mysql> select * from osoby
+    -> WHERE
+    -> imie (NOT)IN ("Bartosz","Roksana");
+
+
+
+# Ograniczanie wyników przy użyciu LIMIT:
+
+mysql> select * from osoby
+    -> LIMIT 5;
+
+
+# LIMIT również może pominąć pierwsze wyszukiwania i wypisać kolejne:
+
+mysql> select * from osoby
+    -> LIMIT 2,3;		# Pomija 2 i wypisuje 3 następne
+
+

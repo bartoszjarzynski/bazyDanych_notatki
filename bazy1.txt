@@ -1,0 +1,100 @@
+#Jak stworzyć bazę danych?
+
+create database nazwa;		-	Utworzenie bazy danych o nazwie 'nazwa'
+
+use znajomi		-	Wchodzimy w baze
+
+create table nazwa (	-	Tworzymy tabelę nazwa
+	-> nazwa typ zakres ...
+#	-> id_o tinyint unsigned not null auto_increment,
+		
+# przecinkiem dodajemy dalej kolumny,
+# jednostka nie moze miec wartosci null,
+# komputer sam zwiększa wartości,
+# unsigned - nie może być ujemnych wartości parametru,
+
+	-> imie char(12) not null,
+#	-> nazwa typ(dlugosc) not null,
+
+	-> wiek tinyint (unsigned),
+# unsigned - podczas podawania wieku musimy zwrócić uwagę, 
+# czy na pewno chcemy zawsze dodatnie liczby (np. różnica wieku)
+
+	-> miasto char(32) default "ChoRzów",
+# default - ustala jakąś daną jako podstawową
+
+	-> primary key(id_o));
+# primary key ustawiamy na 'id', czyli ustalam go jako główny klucz tabeli, self
+
+	-> show tables;
+# pokazuje utworzone tabele
+
+	-> create table telefony(
+	-> id_t tinyint unsigned not null auto_increment,
+	-> numer char(9) not null,
+	-> typ enum("stacjonarny","komorka") default "komorka",
+# enum - zostawia nam wybor pomiedzy X opcjami,
+	-> operator enum("plus","play","orange")
+	-> primary key(id_t));
+
+# desc nazwa_tabeli - pokazuje okreslona tabele
+
+	-> create table pol(
+	-> id_p tinyint unsigned not null auto_increment,
+	-> id_o tinyint unsigned not null,
+	-> id_t tinyint unsigned not null,
+	-> primary key(id_p),
+# klucze id_o/t to "klucze obce" - tez mają pilnować porządku
+	-> foreign key(id_o) references osoby(id_o),
+	-> foreign key(id_t) references telefony(id_t));
+# odwołujemy się do poprzednich tabel "references"
+
+#	! Stworzyliśmy strukturę bazy danych !
+
+
+# zaczynamy wprowadzanie danych
+
+# jak to zrobic?
+	-> insert into tabelka 
+	-> (co się w niej znajduje)
+	-> values
+	-> (wartosci)
+
+# przyklad
+	-> insert into telefony 
+	-> (id_t, numer, typ, operator)
+	-> values
+	-> (wartosci)
+
+# aby wyswietlic dane uzywamy "select"
+	-> select * from telefony;
+
+# jednakze, jesli zrobimy tak, to tez zadziala:
+	-> insert telefony 
+	-> (typ, numer, id_t, operator) # inna kolejnosc
+	-> value
+	-> (wartosci)
+
+# ponadto...
+
+	-> insert telefony 
+	-> value
+	-> (wartosci) # nawet z indeksem 0 lub null
+
+# zadziałają
+
+	-> insert telefony 
+	-> (numer,operator)
+	-> value
+	-> (wartosci)
+
+# również to:
+
+	-> insert telefony (typy) value
+	-> (wartosci);
+
+
+	-> drop database znajomi;
+	# usuwamy bazę
+	-> \. ścieżka
+	# przywracamy
