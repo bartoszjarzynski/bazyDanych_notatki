@@ -1,0 +1,138 @@
+# Wyświetlanie w pionie
+# UNION and UNION ALL
+# Aby wypisać imiona i typy telefonów:
+mysql> select imie 
+    -> from osoby
+    -> UNION
+    -> select typ
+	-> from telefony;
+
+# W ten sposób możemy wypisać wszystkie wyniki z obu baz
+
+# Jeśli chcemy wypisać wszystkie dane, również te powtarzalne:
+mysql> select imie 
+    -> from osoby
+    -> UNION ALL	
+    -> select typ
+	-> from telefony;
+
+# Wypisanie kilku kolumn:
+mysql> select imie, nazwisko
+    -> from osoby
+    -> union (all)
+    -> select operator, typ 
+	-> from telefony;
+
+# Przy różnej ilości kolumn wypisuje błąd
+
+
+
+
+
+
+# W celu zliczenia pewnych danych, używamy COUNT
+mysql> select COUNT(miasto) ile 
+    -> from osoby
+    -> where 
+    -> miasto = "gliwice";
+
+# Zliczamy tutaj ile osób ma wpisane miasto "Gliwice" w bazie
+# W nawiasie przy councie można wpisać wszystko, najczęściej nazwę kolumny lub gwiazdkę
+
+
+
+# Z pomocą pomocniczej tabeli test zliczamy ile jest jakich osobników, biorąc pod uwagę pierwszą i drugą kolumnę
+
+mysql> select "k-w" AS "płeć-stan", count(*) AS ilość
+    -> from test
+    -> where
+    -> p = "k" and s = "w"
+    -> union
+    -> select "k-z", count(*) 
+    -> from test
+    -> where
+    -> p = "k" and s = "z"
+    -> union
+    -> select "m-w", count(*) 
+    -> from test
+    -> where
+    -> p = "m" and s = "w"
+    -> union
+    -> select "m-z", count(*) 
+    -> from test
+    -> where
+    -> p = "m" and s = "z";
+
+
+
+
+# Aby z dowolnej tabeli wypisać scalony układ wielu danych, tak aby się nie powtarzały, używamy DISTINCT
+mysql> select DISTINCT region 
+    -> from country
+    -> where 
+    -> continent = "europe";
+
+# Teraz aby zliczyć wyniki wystarczy użyć count'a
+mysql> select count(distinct region) ile
+    -> from country
+    -> where
+    -> continent = "europe";
+
+# Jednakże jeśli zmienimy COUNT(DISTINCT region) na DISTINCT COUNT(region) wyskoczy nam informacja podliczająca wszystkie znalezione wyniki w danej bazie:
+mysql> select distinct 
+    -> count(region) from country
+    -> where continent like "europe";
+
+# RESULT = count(region) /// 46
+
+
+
+
+# Oprócz COUNT() znajdziemy kilka innych, przydatnych funkcji agregujących:
+	MAX()
+	MIN()
+	AVG()
+	SUM()
+	COUNT()
+
+# PRZYKŁAD - wypisanie liczby miast z >5mln mieszkańców:
+mysql> select count(*) ile 
+    -> from city  
+    -> where 
+    -> population > 5*pow(10,6);
+
+
+# Jeśli chcemy wyznaczyć wartość funkcji agregującej używamy HAVING:
+mysql> select countrycode kod, sum(population) ile
+    -> from city
+    -> group by 1
+    -> HAVING
+    -> sum(population) > 1e7
+    -> order by 2;
+
+# Aby wypisać wszystkie kraje z powyższymi kryteriami, ale kod zaczyna się od litey "P":
+mysql> select countrycode kod, sum(population) ile from city
+    -> where countrycode like "P%"
+    -> group by 1
+    -> having
+    -> ile > 1e7
+    -> order by 2;
+
+# SELECT -> KRYTERIUM NIEAGREGUJĄCE -> HAVING -> KRYTERIUM AGREGUJĄCE
+# JEDNAKŻE zadziała również z AND:
+
+mysql> select countrycode kod, sum(population) ile 
+    -> from city
+    -> group by 1
+    -> having
+    -> ile > 1e7
+    -> and
+    -> where countrycode like "P%"
+    -> order by 2;
+
+
+
+
+
+
+
