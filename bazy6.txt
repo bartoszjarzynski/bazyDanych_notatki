@@ -1,0 +1,140 @@
+# ŁĄCZENIE TABEL, POBIERANIE DANYCH Z WIELU TABEL JEDNOCZEŚNIE
+
+# Aby wypisać dane z dwóch tabel jednocześnie potrzebujemy polecenia WHERE i wskazania co z czym mamy złączyć
+# Przykładowo tutaj wskazujemy, że id_osoby jest takie samo jak id_telefonu
+
+mysql> select imie, nazwisko, wiek, numer, operator, typ
+    -> from osoby, telefony
+    -> where
+    -> osoby.id_o = telefony.id_t;
+
+
+# O wiele częściej praktykowane przez informatyków jest poprzedzanie nazw kolumn nazwą tabeli, z której wywodzi się dana rubryka
+
+mysql> select osoby.imie, osoby.nazwisko, osoby.wiek, telefony.numer, telefony.operator, telefony.typ
+    -> from osoby, telefony
+    -> where
+    -> osoby.id_o = telefony.id_t;
+
+
+# Żeby zmniejszyć sobie nakład pracy przepisując kompletne nazwy tabel, możemy użyć aliasów
+
+mysql> select o.imie, o.nazwisko, o.wiek, t.numer, t.operator, t.typ
+    -> from osoby o, telefony t
+    -> where
+    -> o.id_o = t.id_t;
+
+
+
+
+# Przykład użycia aliasów oraz łączenia tabel w database world
+# Wypisujemy stolice i nazwy krajów zaczynających się na "P":
+
+mysql> select k.name kraj, m.name stolica
+    -> from country k, city m
+    -> where
+    -> k.name like "p%"
+    -> and
+    -> capital = id
+    -> order by 1;
+
+
+# Przykład - wypisanie kodu, kraju, języka oraz czy język jest urzędowym w database world:
+
+mysql> select code kod, name kraj, language jezyk,
+    -> if(isofficial="t", "urzedowy", "nieoficjalny") jaki
+    -> from country, countrylanguage
+    -> where code=countrycode
+    -> and
+    -> (name like "p%" or name like "h%")
+    -> order by 2, 4 desc, 3;
+
+
+# Złączenia możemy również dokonać przez polecenie JOIN ... ON ...
+
+mysql> select code kod, name kraj, language język, if(isofficial = "t", "urzędowy", "nieoficjalny") jaki
+    -> from country JOIN countrylanguage
+    -> ON
+    -> code = countrycode
+    -> where
+    -> name like "P%"
+    -> or
+    -> name like "H%"
+    -> order by 2, 4 desc, 3;
+
+
+# PRZYKŁAD, ZADANIE: wypisz kraje i ich miasta, kraje i ich miasta mają mieć te same litery początkowe, różne litery końcowe i równe długości, wyniki posortuj po krajach, a wewnątrz po miastach
+
+		--- WERSJA BEZ JOIN ---
+mysql> select k.name kraj, m.name miasto
+    -> from country k, city m
+    -> where
+    -> code = countrycode
+    -> and
+    -> left(k.name, 1) = left(m.name, 1)
+    -> and
+    -> right(k.name, 1) <> right(m.name, 1)		# <> są różne
+    -> and
+    -> length(k.name) = length(m.name)
+    -> order by 1,2;
+
+		--- WERSJA Z JOIN ---
+mysql> select k.name kraj, m.name miasto
+    -> from country k JOIN city m
+    -> where
+    -> code = countrycode
+    -> and
+    -> left(k.name, 1) = left(m.name, 1)
+    -> and
+    -> right(k.name, 1) <> right(m.name, 1)
+    -> and
+    -> length(k.name) = length(m.name)
+    -> order by 1,2;
+
+
+# Aby wypisać również kraje bez stolic musimy użyć LEFT/RIGHT JOIN
+# Kierunek JOIN'a wskazuje, która tabela może nie mieć "kolegów", czyli czy kraj może nie mieć przyporządkowanej stolicy
+# Przykład:
+
+mysql> select k.name kraj, m.name stolica
+    -> from country k LEFT JOIN city m
+    -> ON
+    -> capital = id
+    -> where
+    -> k.name like "P%" or k.name like "H%"
+    -> order by 1;
+
+# W wyniku zwróciło również kraj bez stolicy.
+# Nie zadziała to bez ON --> LEFT/RIGHT JOIN potrzebuje ON
+
+
+mysql> select k.name kraj, m.name stolica, language jezyk
+    -> from country k LEFT JOIN city m
+    -> ON capital = id
+    -> LEFT JOIN countrylanguage j
+    -> ON code=j.countrycode
+    -> where
+    -> (k.name like "P%" or k.name like "H%")
+    -> and
+    -> isofficial = "t"
+    -> order by 1,3;
+
+
+
+	# Funkcje:
+1) TRUNCATE(n,m) --> wyświetla liczbę n, gdzie m jest ilością cyfr po przecinku
+2) LPAD(kolumna,n,znak) --> uzupełnia z lewej strony dane z kolumny do długości n znakami znak
+
+# Zadanie -> wyświetlić kraj, populacje kraju, sumę populacji miasta, odsetek mieszczów "wyrażony" w procentach dzięki powyższym funkcjom:
+
+mysql> select k.name kraj, k.population ilu_kraj, sum(m.population) ilu_miasta,
+    -> concat(LPAD(TRUNCATE(100*sum(m.population)/k.population,1),6, " "),"%") odsetek
+    -> from city m, country k
+    -> where
+    -> code=countrycode
+    -> and
+    -> (k.name like "P%" or k.name like "h%")
+    -> group by 1
+    -> having
+    -> odsetek > 0.3
+    -> order by 4;
