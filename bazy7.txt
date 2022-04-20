@@ -1,0 +1,98 @@
+--- PODZAPYTANIA ---
+	To zapytania, których wynik jest wykorzystywany w zewnętrznym zapytaniu, gdzie całość jest jednym zapytaniem.
+	Wyjaśnienie na przykładzie --> wypisz dane państwa o największej ludności, gdzie wynik max() nie będzie tylko jeden. Wtedy...
+
+mysql> select name kraj, continent kontynent, headofstate glowaPanstwa, population populacja
+    -> from country
+    -> where population = (select max(population) from country);
+
+	1) Wybieramy interesujące nas kryteria
+	2) Następnie wybieramy co chcemy uzyskać w oparciu o SELECT z funkcją MAX().
+
+
+
+	Przykład --> wypisz kraje wraz ze średnią ludności
+
+mysql> select name kraj, continent kontynent, population populacja
+    -> from country
+    -> where population between
+    -> (select avg(population) - 2e6 from country)
+    -> and
+    -> (select avg(population) from country) + 2e6
+    -> order by 3;
+
+	1) Stosujemy tutaj 2e6, ponieważ wynik na pewno nie jest liczbą naturalną.
+
+	# Aby dołożyc do powyższego przykładu, np. stolice należy zrobić to tak jak tutaj:
+
+mysql> select c.name kraj, m.name stolica, continent kontynent, c.population ludnosc
+    -> from country c, city m
+    -> where
+    -> capital = id
+    -> and
+    -> abs(c.population - (select avg(population) from country)) < 2e6
+    -> order by 3;
+
+
+
+
+	Przykład --> Wypisanie kraju w Europie o najwiekszej ludnosci.
+
+mysql> select c.name kraj, m.name stolica, continent kontynent, c.population ludnosc
+    -> from country c right join city m
+    -> on capital = id
+    -> where continent like "europe"
+    -> and
+    -> c.population = (select max(population) from country where continent = 2);
+
+	1) Wybieramy parametry
+	2) został tutaj użyty RIGHT JOIN, gdyby dany kraj nie miał jakiegoś parametru
+	3) Populacje wyrazamy jako max() gdzie CONTINENT=2, ponieważ te dane są typu ENUM, gdzie Europa ma taki właśnie numer
+
+
+
+
+
+	Przykład --> Wypisz kraje na "P", [...] oraz różnice ich powierzchni i średniej powierzchni państwa na "P":
+
+mysql> select name, continent, surfacearea,
+    -> surfacearea - (select avg(surfacearea) from country
+    -> where name like "P%") różnica
+    -> from country
+    -> where name like "P%"
+    -> order by 4;
+
+	1) Wybieramy parametry, w tym:
+	Różnica składa się z: POWIERZCHNI - (wybieramy tutaj średnią powierzchnię krajów where kraj zaczyna się na "P")
+	
+
+
+--- TWORZENIE TYMCZASOWYCH TABEL ---
+
+Tworzenie tymczasowych tabel przydaje się, kiedy chcemy wyciągnąć jakąś określoną bazę z istniejącej już, bardziej rozbudowanej.
+	Przykład --> Wypisz wszystkie języki zaczynające się na "Po":
+
+mysql> select language język
+    -> from (select distinct language from countrylanguage) tabela_tymczasowa
+    -> where language like "po%";
+
+	1) Tworzymy tutaj tymczasową tabelę, wybierając tam LANGUAGE (distinct wybiera nam niepowtarzające się wyniki z COUNTRYLANGUAGE)
+
+
+Każda tymczasowa tabela musi mieć jakiś ALIAS. 
+
+
+
+	Przykład --> Wypisz powierzchnie państw, których powierzchnia jest największą na danym kontynencie:
+
+mysql> select name kraj, surfacearea powierzchnia, continent kontynent
+    -> from country c
+    -> where surfacearea =
+    -> (select max(surfacearea)
+    -> from country p
+    -> where
+    -> c.continent = p.continent)
+    -> order by 2;
+
+
+
