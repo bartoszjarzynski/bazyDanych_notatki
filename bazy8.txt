@@ -1,0 +1,113 @@
+# Pytania przez złączenie są szybsze od zapytania przez podzapytanie
+
+# Przykład na wypisanie krajów i liczby ich miast równych pięć:
+mysql> select p.name kraj, count(*) "ile miast"
+    -> from country p, city m
+    -> where 
+    -> code = countrycode
+    -> group by 1
+    -> having 
+	-> count(*) = 5
+    -> order by 1;
+
+
+
+# Przykład na wypisanie miasta, populacji, które mają populację większą niż 70*populacji pewnego miasta w tym kraju, którego nazwa nie jest unikatowa, czyli występuję co najmniej dwukrotnie:
+
+mysql> select name miasto, sum(population) ludność, sum(population)*70 krotność, count(*) ile
+    -> from city
+    -> group by name
+    -> having 
+    -> count(*) > 1
+    -> order by 3;
+
+
+
+		--- FUNKCJA ANY ---
+	Jest odpowiednikiem kwantyfikatora ISTNIEJE. Jeśli znajdzie się w naszym podzapytaniu istniejący do spełnienia warunku wiersz, to zostanie on przeanalizowany i wypisany.
+	
+	# To samo zadanie, wykorzystując ANY:
+
+mysql> select name miasto, population ludnosc
+    -> from city
+    -> where
+    -> population > ANY (select 70*sum(population) from city
+    -> group by name
+    -> having count(*)>1)
+    -> order by 2;
+
+
+		--- FUNKCJA ALL ---
+	Jest odpowiednikiem kwantyfikatora DLA KAŻDEGO. Jeśli znajdzie się w naszym podzapytaniu wiersz spełniający kryteria, to zostanie on przeanalizowany i wypisany.
+
+
+# Przykład: Wypisz kraje i ich liczbę miast, ale tylko tych, które mają liczbę miast nie mniejszą niż dowolny (każdy) kraj z Europy.
+
+mysql> select p.name kraj, count(*) "ile miast"
+    -> from country p, city m
+    -> where
+    -> code = countrycode
+    -> group by 1
+    -> having								
+    -> count(*) > All						
+    -> (select count(*)
+    -> from country, city
+    -> where
+    -> code = countrycode				
+    -> and								 
+    -> continent = "europe"			    
+    -> group by code)
+    -> order by 2;
+
+
+
+		--- FUNKCJA IN ---
+	Analizuje wartość w podzapytaniu zewnętrznym. Jeśli występuje w podzapytaniu wewnętrznym, to wartość jest wypisywana.
+
+
+Przykład użycia funkcji IN, gdzie nie znamy kodu dla Polski i wypisujemy kraje i ich stolice, gdzie mówi się po Polsku:
+
+mysql> select p.name kraj, m.name stolica, language język
+    -> from country p, city m, countrylanguage j
+    -> where
+    -> j.countrycode = code
+    -> and
+    -> capital = id
+    -> and
+    -> language IN						-- wykorzystanie operatora IN
+    -> (select language 
+    -> from countrylanguage cl			
+    -> where 
+    -> cl.countrycode = 				-- nie znamy kodu Polski
+    -> (select code 
+    -> from country
+    -> where
+    -> name = "Poland"))
+    -> order by 3, 1;
+
+
+
+		--- FUNKCJA EXISTS / NOT EXISTS ---
+	Działa identycznie jak BOOL.
+
+# Przykład: Wypisanie krajów, gdzie znajduje się miasto, które zaczyna się na literę "Z":
+
+mysql> select name kraj from country
+    -> where EXISTS					
+    -> (select * from city				
+    -> where							
+    -> code = countrycode
+    -> and
+    -> name like "z%")
+	-> order by 1;	
+
+
+		--- FUNKCJA BINARY ---
+	Jeśli chcemy, żeby wielkość liter miała znaczenie, należy przed to wyrażenie dodać BINARY, np.:
+
+	mysql> select name, population
+    -> from country				
+    -> where code like BINARY "PoL";
+
+
+
